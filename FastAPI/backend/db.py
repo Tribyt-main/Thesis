@@ -5,7 +5,3 @@ from sqlalchemy import Column, Integer, String
 engine = create_engine('sqlite:///ecommerce.db', echo=True)
 
 session_local = sessionmaker(bind=engine)
-
-
-class Base(DeclarativeBase):
-    pass
