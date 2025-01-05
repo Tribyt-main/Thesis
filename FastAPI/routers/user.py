@@ -1,11 +1,9 @@
-from calendar import firstweekday
-
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 
 from FastAPI.backend.db_depends import get_db
 from typing import Annotated
-from FastAPI.models import User
+from FastAPI.models import User, Task
 from FastAPI.schemas import CreateUser, UpdateUser
 from sqlalchemy import insert, select, update, delete
 from slugify import slugify
@@ -15,21 +13,17 @@ router = APIRouter(prefix='/user', tags=['user'])
 
 @router.get('/')
 async def get_all_users(db: Annotated[Session, Depends(get_db)]):
-    users = db.scalars(select(User).where(User.is_active == True)).all()
-    if users in None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail='User was not found')
+    users = db.query(User).all()
     return users
 
 
-@router.get('/user_id')
+@router.get('/{user_id}')
 async def user_by_id(db: Annotated[Session, Depends(get_db)], user_id: int):
-    user = db.scalars(select(User).where(User.id == user_id))
+    user = db.query(User).filter(User.id == user_id).first()
     if user in None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail='User was not found')
-    else:
-        return user
+    return user
 
 
 @router.post('/create')
@@ -45,7 +39,7 @@ async def create_user(db: Annotated[Session, Depends(get_db)], create_user: Crea
 
 @router.put('/update')
 async def update_user(db: Annotated[Session, Depends(get_db)], update_user: UpdateUser, user_id: int):
-    user = db.scalars(select(User).where(User.id == user_id))
+    user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail='User was not found')
@@ -56,15 +50,17 @@ async def update_user(db: Annotated[Session, Depends(get_db)], update_user: Upda
             lastname=update_user.lastname,
             age=update_user.age
         ))
-        return {'status_code': status.HTTP_200_OK, 'transaction': 'User update is successful!'}
+    db.commit()
+    return {'status_code': status.HTTP_200_OK, 'transaction': 'User update is successful!'}
 
 
 @router.delete('/delete')
 async def delete_user(db: Annotated[Session, Depends(get_db)], user_id: int):
-    user = db.scalars(select(User).where(User.id == user_id))
+    user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail='User was not found')
     else:
         db.execute(delete(User).where(User.id == user_id))
+        db.commit()
         return {'status_code': status.HTTP_200_OK, 'transaction': 'User delete is successful!'}
