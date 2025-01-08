@@ -19,9 +19,13 @@ from django.urls import path
 from mysite.task2.views import func_temp, class_temp
 from django.views.generic import TemplateView
 
+from mysite.task3.views import main_page, second_page, third_page
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', func_temp),
-    path('class/', class_temp.as_view())
+    path('', main_page),
+    path('class/', class_temp.as_view()),
+    path('second_page', second_page),
+    path('third_page', third_page)
     # path('index/', TemplateView.as_view(template_name='index2.html')) #FOR RUN CLASS
 ]
